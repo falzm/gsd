@@ -187,6 +187,7 @@ func TestPlan_Execute_WithRetries(t *testing.T) {
 		Execute(context.Background())
 
 	actual, _ := plan.State().Load("test")
+	require.Error(t, err)
 	require.Equal(t, "**", actual)
 }
 
