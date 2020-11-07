@@ -29,8 +29,8 @@ type Step interface {
 	// upon error. Note: all *Exec functions are retried at each
 	// subsequent attempt, the implementor is responsible to track the state
 	// of previous attempts internally if they don't want certain functions to
-	// be retried (e.g. if the ExecFunc has executed successfully but the
-	// PostExecFunc failed, the ExecFunc should not be re-executed). The
-	// CleanupFunc is not retried.
+	// be retried (e.g. if the Exec function has executed successfully but the
+	// PostExec hook failed, the Exec function should not be re-executed). The
+	// Cleanup hook is not retried.
 	Retries() int
 }
