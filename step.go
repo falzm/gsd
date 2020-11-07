@@ -23,4 +23,13 @@ type Step interface {
 	// Note: a step's cleanup hook is only executed if all of its *ExecFunc
 	// have been executed successfully.
 	CleanupFunc(context.Context, *State)
+
+	// Retries return the number of times a step execution should be retried
+	// upon error. Note: all *ExecFunc functions are retried at each
+	// subsequent attempt, the implementor is responsible to track the state
+	// of previous attempts internally if they don't want certain functions to
+	// be retried (e.g. if the ExecFunc has executed successfully but the
+	// PostExecFunc failed, the ExecFunc should not be re-executed). The
+	// CleanupFunc is not retried.
+	Retries() int
 }

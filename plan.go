@@ -87,27 +87,47 @@ func (p *Plan) Execute(ctx context.Context) error {
 
 		defer cancelFunc()
 
-		for step := p.steps.Front(); step != nil; step = step.Next() {
-			if err = ctx.Err(); err != nil {
-				errCh <- err
-				return
-			}
+		for s := p.steps.Front(); s != nil; s = s.Next() {
+			step := s.Value.(Step)
 
-			if err = step.Value.(Step).PreExecFunc(ctx, p.state); err != nil && !p.continueOnError {
-				break
-			}
+			for attempt := 0; attempt <= step.Retries(); attempt++ {
+				if err = ctx.Err(); err != nil {
+					errCh <- err
+					return
+				}
 
-			if err = step.Value.(Step).ExecFunc(ctx, p.state); err != nil && !p.continueOnError {
-				break
-			}
+				if err = step.PreExecFunc(ctx, p.state); err != nil {
+					if !p.continueOnError {
+						goto stop
+					}
+					if step.Retries() > attempt {
+						continue
+					}
+				}
 
-			if err = step.Value.(Step).PostExecFunc(ctx, p.state); err != nil && !p.continueOnError {
-				break
+				if err = step.ExecFunc(ctx, p.state); err != nil {
+					if !p.continueOnError {
+						goto stop
+					}
+					if step.Retries() > attempt {
+						continue
+					}
+				}
+
+				if err = step.PostExecFunc(ctx, p.state); err != nil {
+					if !p.continueOnError {
+						goto stop
+					}
+					if step.Retries() > attempt {
+						continue
+					}
+				}
 			}
 
 			// Save last successful step as starting point of the cleanup phase.
-			lastOK = step
+			lastOK = s
 		}
+	stop:
 
 		for step := lastOK; step != nil; step = step.Prev() {
 			if ctx.Err() != nil {
@@ -127,11 +147,13 @@ func (p *Plan) Execute(ctx context.Context) error {
 	}(cancel)
 
 	select {
+	// Plan finished execution.
 	case err := <-errCh:
 		cancel()
 		close(errCh)
 		return err
 
+	// Parent context aborted.
 	case <-ctx.Done():
 		switch ctx.Err() {
 		case context.Canceled:

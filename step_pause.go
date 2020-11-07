@@ -27,3 +27,7 @@ func (s *pauseStep) PostExecFunc(_ context.Context, _ *State) error {
 }
 
 func (s *pauseStep) CleanupFunc(_ context.Context, _ *State) {}
+
+func (s *pauseStep) Retries() int {
+	return 0
+}

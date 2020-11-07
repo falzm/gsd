@@ -172,6 +172,24 @@ func TestPlan_Execute_WithTimeout(t *testing.T) {
 	require.EqualError(t, err, ErrTimeout.Error())
 }
 
+func TestPlan_Execute_WithRetries(t *testing.T) {
+	plan, err := NewPlan()
+	require.NoError(t, err)
+
+	testStep := &GenericStep{
+		PreExec:  func(ctx context.Context, state *State) error { return testStepFunc(state, "*") },
+		Exec:     func(ctx context.Context, state *State) error { return testStepFunc(state, "*") },
+		PostExec: func(ctx context.Context, state *State) error { return errors.New("blah") },
+	}
+
+	err = plan.
+		AddStep(testStep.WithRetries(3)).
+		Execute(context.Background())
+
+	actual, _ := plan.State().Load("test")
+	require.Equal(t, "**", actual)
+}
+
 func TestPlan_AddPause(t *testing.T) {
 	plan, err := NewPlan()
 	require.NoError(t, err)
