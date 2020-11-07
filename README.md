@@ -1,5 +1,8 @@
 # GSD – Get Sh*t Done
 
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/falzm/gsd)](https://pkg.go.dev/github.com/falzm/gsd)
+![CI](https://github.com/falzm/gsd/workflows/CI/badge.svg?branch=main)
+
 The `gsd` package offers a simple, no-frills way of performing arbitrary
 actions executed step-by-step according to a *plan*. It is inspired from
 [Packer's `multistep`][packer-multistep] package.
